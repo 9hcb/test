@@ -43,15 +43,9 @@ jobs:
       # 5. 启动 playit.gg 隧道
       - name: 启动 playit.gg 隧道
         run: |
-          wget "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-amd64" -O playit
-          chmod +x playit
-          echo "yes" | ./playit --accept-license > playit.log 2>&1 &
-          sleep 30  # 等待隧道启动
-
-          # 提取连接地址
-          PLAYIT_URL=$(grep -o "game started at: tcp://[^\s]*" playit.log | sed 's/game started at: //')
-          echo "连接地址: $PLAYIT_URL"
-          echo "PLAYIT_URL=$PLAYIT_URL" >> $GITHUB_ENV
+           wget "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-amd64" -O playit
+           chmod +x playit
+           echo "yes" | ./playit --accept-license
 
       # 6. 启动 Minecraft 服务器
       - name: 启动 Minecraft 服务器
