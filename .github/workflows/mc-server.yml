@@ -6,16 +6,20 @@ on:
 jobs:
   mc-server:
     runs-on: ubuntu-latest
-    steps:
-      # 1. 安装 Java 17
-      - name: 安装 Java 17
-        run: sudo apt-get install -y openjdk-17-jdk
 
-      # 2. 动态获取最新 PaperMC 版本和构建号
+    steps:
+      # 1. 安装 Java 17（推荐使用官方 action）
+      - name: 设置 Java 17
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+
+      # 2. 获取最新的 PaperMC 版本和构建号
       - name: 获取 PaperMC 最新版本
         id: paper
         run: |
-          # 获取最新版本号（例如 1.20.4）
+          # 获取最新版本号
           PAPER_VERSION=1.20.1
           echo "最新版本: $PAPER_VERSION"
 
@@ -36,25 +40,23 @@ jobs:
       - name: 同意 EULA
         run: echo "eula=true" > eula.txt
 
-      # 5. 使用 playit.gg 暴露端口
+      # 5. 启动 playit.gg 隧道
       - name: 启动 playit.gg 隧道
         run: |
-          # 下载 playit.gg
           wget "https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-amd64" -O playit
           chmod +x playit
-
-          # 自动同意协议并启动隧道
-          echo "yes" | ./playit --accept-license &  # 后台运行
+          echo "yes" | ./playit --accept-license > playit.log 2>&1 &
           sleep 30  # 等待隧道启动
 
-          # 从日志中提取连接地址
-          PLAYIT_URL=$(grep -o "game started at: tcp://playit-host:[0-9]*" playit.log | sed 's/game started at: //')
-          echo "================================"
+          # 提取连接地址
+          PLAYIT_URL=$(grep -o "game started at: tcp://[^\s]*" playit.log | sed 's/game started at: //')
           echo "连接地址: $PLAYIT_URL"
-          echo "================================"======================="
+          echo "PLAYIT_URL=$PLAYIT_URL" >> $GITHUB_ENV
 
-      # 7. 启动服务器
+      # 6. 启动 Minecraft 服务器
       - name: 启动 Minecraft 服务器
         run: |
+          echo "你可以使用以下地址连接服务器："
+          echo "${{ env.PLAYIT_URL }}"
           java -Xmx2G -Xms1G -jar server.jar nogui
-        timeout-minutes: 360  # 6 小时限制
+        timeout-minutes: 360  # 最多运行 6 小时
