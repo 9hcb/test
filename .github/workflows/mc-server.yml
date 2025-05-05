@@ -36,23 +36,22 @@ jobs:
       - name: 同意 EULA
         run: echo "eula=true" > eula.txt
 
-      # 5. 安装 Ngrok 并暴露端口
-      - name: 设置 Ngrok
+      # 5. 使用 playit.gg 暴露端口
+      - name: 启动 playit.gg 隧道
         run: |
-          curl -s https://ngrok-agent.s3.amazonaws.com/ngrok.asc | sudo tee /etc/apt/trusted.gpg.d/ngrok.asc >/dev/null
-          echo "deb https://ngrok-agent.s3.amazonaws.com buster main" | sudo tee /etc/apt/sources.list.d/ngrok.list
-          sudo apt update && sudo apt install ngrok
-          ngrok config add-authtoken ${{ secrets.NGROK_TOKEN }}
-          ngrok tcp 25565 --log=stdout > ngrok.log &
-          sleep 10
+          # 下载 playit.gg
+          wget https://playit.gg/downloads/playit-linux-0.9.3 -O playit
+          chmod +x playit
 
-      # 6. 获取公网地址
-      - name: 获取连接地址
-        run: |
-          NGROK_URL=$(curl -s http://localhost:4040/api/tunnels | jq -r '.tunnels[0].public_url')
+          # 自动同意协议并启动隧道
+          echo "yes" | ./playit --accept-license &  # 后台运行
+          sleep 30  # 等待隧道启动
+
+          # 从日志中提取连接地址
+          PLAYIT_URL=$(grep -o "game started at: tcp://playit-host:[0-9]*" playit.log | sed 's/game started at: //')
           echo "================================"
-          echo "连接地址: ${NGROK_URL}"
-          echo "================================"
+          echo "连接地址: $PLAYIT_URL"
+          echo "================================"======================="
 
       # 7. 启动服务器
       - name: 启动 Minecraft 服务器
