@@ -40,7 +40,7 @@ jobs:
       - name: 启动 playit.gg 隧道
         run: |
           # 下载 playit.gg
-          wget https://playit.gg/downloads/playit-linux-0.9.3 -O playit
+          wget https://github.com/playit-cloud/playit-agent/releases/download/v0.15.26/playit-linux-amd64 -O playit
           chmod +x playit
 
           # 自动同意协议并启动隧道
